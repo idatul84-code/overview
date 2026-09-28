@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HBT102, Week 1: Introduction to Basic Interpreting Skills</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       1. TOKENS
+       ============================================================ */
+    :root {
+      /* Colour */
+      --ink:    #0a1024;
+      --paper:  #fffdf7;
+      --blue:   #3155ff;
+      --cyan:   #00d9ff;
+      --pink:   #ff3d8d;
+      --yellow: #ffd43b;
+      --lime:   #b9f34a;
+      --purple: #773cff;
+
+      /* Type families */
+      --font-display: "Bricolage Grotesque", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+      --font-body:    "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+      /* Type scale (fluid, roughly a 1.25 ratio at desktop widths) */
+      --fs-display: clamp(3.5rem, 8vw, 8.25rem);
+      --fs-h2:      clamp(2.6rem, 5.4vw, 5.5rem);
+      --fs-h3:      clamp(1.5rem, 2.2vw, 2.15rem);
+      --fs-lead:    clamp(1.15rem, 1.65vw, 1.5rem);
+      --fs-body:    clamp(1rem, 1.2vw, 1.2rem);
+      --fs-small:   clamp(0.9rem, 1vw, 1rem);
+      --fs-label:   0.9rem;
+
+      /* Leading */
+      --lh-tight: 0.95;
+      --lh-snug:  1.2;
+      --lh-body:  1.45;
+
+      /* Shape */
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+      --border:    3px solid var(--ink);
+    }
+
+    /* ============================================================
+       2. BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      line-height: var(--lh-body);
+      color: var(--ink);
+      background: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      margin: 0;
+      text-wrap: balance;
+    }
+
+    h1, h2 {
+      line-height: var(--lh-tight);
+      letter-spacing: -0.035em;
+    }
+
+    h1 { font-size: var(--fs-display); margin: 1.5rem 0 1.25rem; }
+    h2 { font-size: var(--fs-h2);      margin: 1.25rem 0 1rem; }
+
+    h3 {
+      font-size: var(--fs-h3);
+      line-height: var(--lh-snug);
+      letter-spacing: -0.015em;
+    }
+
+    p { margin: 0; text-wrap: pretty; }
+
+    em { font-style: normal; }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--purple);
+      outline-offset: 3px;
+    }
+
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ============================================================
+       3. DECK & SLIDE SHELL
+       ============================================================ */
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 7vh 7vw 11vh;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .slide.active {
+      display: block;
+      animation: enter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateX(40px) scale(0.985); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Decorative blobs */
+    .slide::before,
+    .slide::after {
+      content: "";
+      position: absolute;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .slide::before {
+      width: 58vw;
+      height: 58vw;
+      right: -19vw;
+      top: -28vw;
+      border-radius: 48% 52% 45% 55%;
+      background: var(--cyan);
+      transform: rotate(12deg);
+      animation: blob 9s ease-in-out infinite alternate;
+    }
+
+    .slide::after {
+      width: 38vw;
+      height: 38vw;
+      left: -16vw;
+      bottom: -22vw;
+      border-radius: 55% 45% 60% 40%;
+      background: var(--pink);
+      transform: rotate(-18deg);
+      animation: blob2 11s ease-in-out infinite alternate;
+    }
+
+    @keyframes blob  { to { transform: translate(-5vw, 5vh) rotate(35deg); } }
+    @keyframes blob2 { to { transform: translate(5vw, -4vh) rotate(18deg); } }
+
+    /* Slide themes */
+    .slide.warm {
+      background: linear-gradient(135deg, #fff8db 0%, #ffd43b 42%, #ff4f98 100%);
+      color: var(--ink);
+    }
+    .slide.dark {
+      background: linear-gradient(135deg, #0a1024 0%, #17215c 55%, #3155ff 100%);
+      color: #fff;
+    }
+    .slide.blue {
+      background: linear-gradient(135deg, #e9ffff 0%, #5ee7ff 42%, #3155ff 100%);
+      color: var(--ink);
+    }
+
+    /* ============================================================
+       4. SHARED SLIDE ELEMENTS
+       ============================================================ */
+    .kicker {
+      position: relative;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 1rem 0.5rem 0.5rem;
+      border: 2px solid currentColor;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      font-size: var(--fs-label);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+
+    .kicker-num {
+      display: inline-grid;
+      place-items: center;
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 0.5rem;
+      border-radius: 999px;
+      background: currentColor;
+      font-family: var(--font-display);
+      font-variant-numeric: tabular-nums;
+    }
+    .kicker-num span { color: #fff; }
+    .dark .kicker-num span { color: var(--ink); }
+    .kicker-plain { padding: 0.65rem 1.1rem; }
+
+    .lead {
+      position: relative;
+      z-index: 4;
+      max-width: 38ch;
+      font-size: var(--fs-lead);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.75rem 1.15rem;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      font-size: var(--fs-small);
+      line-height: 1.3;
+    }
+    .pill strong { font-weight: 700; }
+
+    .footer {
+      position: absolute;
+      z-index: 20;
+      left: 7vw;
+      right: calc(7vw + 120px);
+      bottom: 4.5vh;
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--fs-label);
+      font-weight: 700;
+      opacity: 0.85;
+    }
+
+    /* Decorative emoji discs */
+    .hero-shape {
+      position: absolute;
+      z-index: -1;
+      right: 5vw;
+      top: 18vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: min(35vw, 480px);
+      height: min(35vw, 480px);
+      border-radius: 50%;
+      font-size: min(16vw, 180px);
+      filter: drop-shadow(18px 18px 0 rgba(10, 16, 36, 0.25));
+      pointer-events: none;
+      animation: heroFloat 5s ease-in-out infinite alternate;
+    }
+    .dark .hero-shape { filter: drop-shadow(18px 18px 0 rgba(0, 0, 0, 0.35)); }
+
+    .hero-mic    { background: var(--yellow); }
+    .hero-globe  { background: var(--yellow); }
+    .hero-rocket { background: var(--yellow); }
+
+    /* On slides with a card row, keep the disc clear of the cards */
+    .hero-globe,
+    .hero-rocket {
+      top: 7vh;
+      width: min(24vw, 340px);
+      height: min(24vw, 340px);
+      font-size: min(11vw, 130px);
+    }
+
+    @keyframes heroFloat {
+      to { transform: translateY(-18px) rotate(5deg) scale(1.03); }
+    }
+
+    /* ============================================================
+       5. SLIDE 1 — WELCOME
+       ============================================================ */
+    .slide h1 em {
+      color: var(--yellow);
+      text-shadow: 3px 3px 0 var(--ink);
+    }
+
+    /* ============================================================
+       6. SLIDE 2 — WHAT IS INTERPRETING?
+       ============================================================ */
+    .slide2-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 5vw;
+      align-items: center;
+      margin-top: 4vh;
+    }
+
+    .slide2-left h2 { margin: 0 0 1.75rem; }
+
+    .slide2-left h2 span {
+      color: var(--yellow);
+      text-shadow: 3px 3px 0 var(--ink);
+    }
+
+    .scenario-stack {
+      display: grid;
+      gap: 0.8rem;
+      max-width: 620px;
+    }
+
+    .scenario-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 62px;
+      padding: 0.9rem 1.15rem;
+      border: var(--border);
+      border-radius: var(--radius-md);
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 6px 6px 0 var(--pink);
+      font-size: clamp(1.05rem, 1.45vw, 1.3rem);
+      line-height: var(--lh-snug);
+    }
+    .scenario-card:nth-child(2) { box-shadow: 6px 6px 0 var(--cyan); }
+    .scenario-card:nth-child(3) { box-shadow: 6px 6px 0 var(--yellow); }
+    .scenario-card b    { font-weight: 700; }
+    .scenario-card span { font-size: 1.3rem; font-weight: 700; }
+
+    .meaning-circle {
+      position: relative;
+      justify-self: end;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: min(38vw, 500px);
+      aspect-ratio: 1;
+      padding: 5vw;
+      border: 6px solid var(--ink);
+      border-radius: 50%;
+      background: var(--yellow);
+      color: var(--ink);
+      text-align: center;
+      box-shadow: 18px 18px 0 var(--pink);
+      animation: circleFloat 5s ease-in-out infinite alternate;
+    }
+
+    .meaning-circle::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border: 3px dashed var(--ink);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .circle-label {
+      position: relative;
+      margin-bottom: 0.9rem;
+      font-family: var(--font-display);
+      font-size: var(--fs-label);
+      font-weight: 800;
+    }
+
+    .circle-text {
+      position: relative;
+      max-width: 17em;
+      font-size: clamp(1.1rem, 1.7vw, 1.55rem);
+      line-height: 1.28;
+      font-weight: 700;
+    }
+
+    .circle-text strong {
+      display: block;
+      margin-top: 0.35rem;
+      font-family: var(--font-display);
+      font-size: 1.2em;
+      font-weight: 800;
+    }
+
+    .circle-mini {
+      position: relative;
+      margin-top: 1rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    @keyframes circleFloat {
+      to { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    /* ============================================================
+       7. SLIDE 3 — INTERPRETING VS TRANSLATION
+       ============================================================ */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 1050px;
+      margin-top: 5vh;
+    }
+
+    .compare > div {
+      min-height: 270px;
+      padding: 2rem;
+      border: 4px solid var(--ink);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 12px 12px 0 var(--ink);
+    }
+    .compare > div:last-child {
+      background: var(--pink);
+      color: #fff;
+    }
+
+    .compare h3 {
+      margin-bottom: 1.1rem;
+      font-size: clamp(1.9rem, 2.8vw, 2.5rem);
+    }
+
+    .compare p {
+      margin: 0.55rem 0 0;
+      font-size: var(--fs-body);
+      line-height: var(--lh-snug);
+    }
+    .compare p:first-of-type {
+      font-size: clamp(1.2rem, 1.5vw, 1.4rem);
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       8. SLIDE 4 — CONTEXTS & MODES
+       ============================================================ */
+    .slide.blue h2 { max-width: 18ch; }
+
+    .contexts {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-top: 4vh;
+      max-width: 1150px;
+    }
+
+    .context {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 155px;
+      padding: 1.25rem 0.9rem;
+      border: var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.85);
+      text-align: center;
+      box-shadow: 5px 5px 0 var(--ink);
+      cursor: pointer;
+      transition: transform 0.18s, background-color 0.18s;
+    }
+    .context:hover,
+    .context.selected {
+      transform: translateY(-7px) rotate(-1deg);
+      background: var(--yellow);
+    }
+
+    .icon {
+      margin-bottom: 0.4rem;
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .context strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .context small {
+      margin-top: 0.2rem;
+      font-size: var(--fs-small);
+      opacity: 0.72;
+    }
+
+    /* ============================================================
+       8b. SLIDE 5 — MODES
+       ============================================================ */
+    .mode-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem 1.25rem;
+      max-width: 1150px;
+      margin-top: 5vh;
+    }
+
+    .mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1.1rem 1.3rem 1.25rem;
+      border: var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--paper);
+      color: var(--ink);
+      text-align: left;
+      box-shadow: 8px 8px 0 var(--pink);
+      cursor: pointer;
+      transition: transform 0.18s, background-color 0.18s;
+    }
+    .mode-card:nth-child(2) { box-shadow: 8px 8px 0 var(--cyan); }
+    .mode-card:nth-child(3) { box-shadow: 8px 8px 0 var(--yellow); }
+    .mode-card:hover,
+    .mode-card.selected {
+      transform: translateY(-6px);
+      background: var(--yellow);
+    }
+
+    .mode-emoji {
+      font-size: 2.1rem;
+      line-height: 1;
+    }
+
+    .mode-card strong {
+      display: block;
+      margin: 0.6rem 0 0.35rem;
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 1.8vw, 1.65rem);
+      font-weight: 800;
+      line-height: var(--lh-snug);
+    }
+
+    .mode-card p {
+      margin-bottom: 1rem;
+      font-size: var(--fs-body);
+      line-height: 1.35;
+    }
+
+    /* Sub-type nested under its parent mode */
+    .mode-variant {
+      display: block;
+      margin-top: auto;
+      padding-top: 0.9rem;
+      border-top: 2px dashed var(--ink);
+      font-size: var(--fs-small);
+      line-height: 1.35;
+    }
+    .mode-variant b { font-weight: 700; }
+
+    .mode-info {
+      position: relative;
+      z-index: 4;
+      max-width: 60ch;
+      min-height: 2rem;
+      margin-top: 1.5rem;
+      font-size: var(--fs-lead);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       9. SLIDE 5 — PROCESS
+       ============================================================ */
+    .process {
+      display: flex;
+      align-items: stretch;
+      gap: 0.7rem;
+      max-width: 1200px;
+      margin: 6vh 0 0;
+    }
+
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 170px;
+      padding: 1.3rem;
+      border: var(--border);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.86);
+      text-align: left;
+      box-shadow: 6px 6px 0 var(--ink);
+      cursor: pointer;
+      transition: transform 0.18s, background-color 0.18s;
+    }
+    .step:hover,
+    .step.active {
+      transform: translateY(-6px);
+      background: var(--yellow);
+    }
+
+    .step-emoji {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+      font-weight: 800;
+    }
+
+    .step small {
+      font-size: var(--fs-small);
+      line-height: 1.3;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+    }
+
+    .step-info {
+      max-width: 60ch;
+      min-height: 1.5rem;
+      margin-top: 3vh;
+      font-size: var(--fs-lead);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       10. SLIDE 6 — JOURNEY
+       ============================================================ */
+    .skills {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      max-width: 1150px;
+      margin-top: 5vh;
+    }
+
+    .skill {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 190px;
+      padding: 1.4rem;
+      border: 3px solid #fff;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      transition: transform 0.18s, background-color 0.18s;
+    }
+    .skill:hover {
+      transform: translateY(-8px) rotate(-1deg);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .symbol {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .skill strong {
+      display: block;
+      margin: 0.7rem 0 0.35rem;
+      font-family: var(--font-display);
+      font-size: clamp(1.15rem, 1.4vw, 1.35rem);
+      font-weight: 800;
+    }
+
+    .skill p {
+      font-size: var(--fs-small);
+      line-height: 1.35;
+    }
+
+    /* ============================================================
+       11. CHROME: PROGRESS & NAV
+       ============================================================ */
+    .progress {
+      position: absolute;
+      z-index: 30;
+      left: 0;
+      bottom: 0;
+      width: 16.66%;
+      height: 7px;
+      background: var(--yellow);
+      transition: width 0.35s;
+    }
+
+    .nav {
+      position: absolute;
+      z-index: 40;
+      right: 2vw;
+      bottom: 2.5vh;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .nav button {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--ink);
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .nav button:hover {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    /* ============================================================
+       12. RESPONSIVE
+       ============================================================ */
+    @media (max-width: 900px) {
+      .slide2-grid,
+      .compare { grid-template-columns: 1fr; }
+
+      .meaning-circle {
+        justify-self: start;
+        width: min(80vw, 360px);
+        padding: 2.5rem;
+        margin-top: 1rem;
+        box-shadow: 10px 10px 0 var(--pink);
+      }
+
+      .compare > div { min-height: 0; }
+
+      .contexts,
+      .skills { grid-template-columns: repeat(2, 1fr); }
+
+      .mode-cards { grid-template-columns: 1fr; }
+
+      .process { flex-wrap: wrap; }
+      .step    { min-width: 29%; }
+      .arrow   { display: none; }
+
+      .hero-shape {
+        right: -10vw;
+        top: 20vh;
+        width: 55vw;
+        height: 55vw;
+        font-size: 24vw;
+        opacity: 0.28;
+      }
+    }
+
+    @media (max-width: 650px) {
+      /* Content is taller than the screen on phones: let each slide scroll */
+      .slide {
+        padding: 5vh 6vw 96px;
+        overflow-y: auto;
+      }
+      h1 { font-size: clamp(3rem, 14vw, 5.5rem); }
+      h2 { font-size: clamp(2.2rem, 10.5vw, 4.5rem); }
+
+      .step { min-width: 45%; }
+
+      .footer {
+        position: static;
+        margin-top: 2.5rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="deck">
+  <div class="progress" id="progress"></div>
+
+  <!-- 1 · Welcome -->
+  <section class="slide warm active" data-title="Welcome">
+    <div class="hero-shape hero-mic" aria-hidden="true">🎙️</div>
+    <div class="kicker kicker-plain">HBT102, Week 1</div>
+    <h1>Welcome to<br><em>Interpreting.</em></h1>
+    <p class="lead">A first look at what interpreting is, where it happens, and the skills you will build throughout this course.</p>
+    <div class="pill"><strong>Dr. Nor Idatul Akmar</strong> – Basic Skills in Interpreting</div>
+    <div class="footer"><span>HBT102</span><span class="num">1 / 7</span></div>
+  </section>
+
+  <!-- 2 · What is interpreting? -->
+  <section class="slide dark" data-title="What is interpreting?">
+    <div class="kicker"><span class="kicker-num"><span>01</span></span>Imagine this situation</div>
+
+    <div class="slide2-grid">
+      <div class="slide2-left">
+        <h2>What is<br><span>interpreting?</span></h2>
+
+        <div class="scenario-stack">
+          <div class="scenario-card"><b>A doctor speaks English.</b><span aria-hidden="true">↓</span></div>
+          <div class="scenario-card"><b>The patient speaks Pashto.</b><span aria-hidden="true">↓</span></div>
+          <div class="scenario-card"><b>They need to understand each other.</b></div>
+        </div>
+      </div>
+
+      <div class="meaning-circle">
+        <div class="circle-label">The core idea</div>
+        <div class="circle-text">
+          Interpreting happens when a spoken message needs to be understood across&nbsp;languages,
+          <strong>in real time.</strong>
+        </div>
+        <div class="circle-mini">Spoken → meaning → spoken</div>
+      </div>
+    </div>
+
+    <div class="footer"><span>Introduction</span><span class="num">2 / 7</span></div>
+  </section>
+
+  <!-- 3 · Interpreting vs translation -->
+  <section class="slide warm" data-title="Interpreting vs Translation">
+    <div class="kicker"><span class="kicker-num"><span>02</span></span>The basic distinction</div>
+    <h2>Same languages.<br>Different task.</h2>
+
+    <div class="compare">
+      <div>
+        <h3>Translation</h3>
+        <p>Written language</p>
+        <p>Time to research and revise</p>
+        <p>Works with a text</p>
+      </div>
+      <div>
+        <h3>Interpreting</h3>
+        <p>Spoken language</p>
+        <p>Real-time processing</p>
+        <p>Works with live interaction</p>
+      </div>
+    </div>
+
+    <div class="footer"><span>Core concept</span><span class="num">3 / 7</span></div>
+  </section>
+
+  <!-- 4 · Contexts -->
+  <section class="slide blue" data-title="Where &amp; How">
+    <div class="hero-shape hero-globe" aria-hidden="true">🌍</div>
+    <div class="kicker"><span class="kicker-num"><span>03</span></span>The interpreting landscape</div>
+    <h2>Where does interpreting happen?</h2>
+
+    <div class="contexts">
+      <button class="context" onclick="pickContext(this, 'Healthcare: a doctor and patient need to communicate.')"><span class="icon" aria-hidden="true">🏥</span><strong>Healthcare</strong><small>Tap to explore</small></button>
+      <button class="context" onclick="pickContext(this, 'Legal: a witness gives evidence across languages.')"><span class="icon" aria-hidden="true">⚖️</span><strong>Legal</strong><small>Tap to explore</small></button>
+      <button class="context" onclick="pickContext(this, 'Education: a lecturer and student communicate across languages.')"><span class="icon" aria-hidden="true">🏫</span><strong>Education</strong><small>Tap to explore</small></button>
+      <button class="context" onclick="pickContext(this, 'Business: people negotiate and collaborate in a multilingual workplace.')"><span class="icon" aria-hidden="true">🏢</span><strong>Business</strong><small>Tap to explore</small></button>
+      <button class="context" onclick="pickContext(this, 'Conference: participants hear a speaker through an interpreter.')"><span class="icon" aria-hidden="true">🎤</span><strong>Conference</strong><small>Tap to explore</small></button>
+    </div>
+
+    <p class="mode-info" id="contextInfo" aria-live="polite">Choose a context to see a brief example.</p>
+
+    <div class="footer"><span>Contexts</span><span class="num">4 / 7</span></div>
+  </section>
+
+  <!-- 5 · Modes -->
+  <section class="slide dark" data-title="Modes of interpreting">
+    <div class="kicker"><span class="kicker-num"><span>04</span></span>How is it done?</div>
+    <h2>Three main modes<br>of interpreting.</h2>
+
+    <div class="mode-cards">
+      <button class="mode-card" onclick="mode(this, 'Example: at a press conference, the minister speaks a few sentences, stops, and the interpreter renders them. In liaison, the doctor and the Pashto-speaking patient take turns, and the interpreter works in both directions.')">
+        <span class="mode-emoji" aria-hidden="true">⏸️</span>
+        <strong>Consecutive</strong>
+        <p>The speaker pauses, then the interpreter speaks.</p>
+        <span class="mode-variant"><b>Liaison</b> is a form of consecutive used in two-way conversations, such as between a doctor and a patient.</span>
+      </button>
+      <button class="mode-card" onclick="mode(this, 'Example: at an international conference, delegates listen to the interpreter through headsets. In chuchotage, a visiting delegate sits beside the interpreter, with no booth or equipment.')">
+        <span class="mode-emoji" aria-hidden="true">🎧</span>
+        <strong>Simultaneous</strong>
+        <p>The interpreter speaks almost at the same time as the speaker, usually from a booth.</p>
+        <span class="mode-variant"><b>Whispered</b> (<i>chuchotage</i>) is a form of simultaneous whispered to one or two listeners.</span>
+      </button>
+      <button class="mode-card" onclick="mode(this, 'Example: the interpreter reads a consent form aloud to the patient in Pashto.')">
+        <span class="mode-emoji" aria-hidden="true">📄</span>
+        <strong>Sight translation</strong>
+        <p>Reading a written document aloud in another language on the spot.</p>
+      </button>
+    </div>
+    <p class="mode-info" id="modeInfo" aria-live="polite">Choose a mode to see an example in context.</p>
+
+    <div class="footer"><span>Modes</span><span class="num">5 / 7</span></div>
+  </section>
+
+  <!-- 6 · The interpreter’s process -->
+  <section class="slide warm" data-title="The Interpreter’s Process">
+    <div class="kicker"><span class="kicker-num"><span>05</span></span>What does an interpreter actually do?</div>
+    <h2>From spoken words<br>to intended meaning.</h2>
+
+    <div class="process">
+      <button class="step" onclick="step(this, 'Listen: pay attention to the message, not only individual words.')"><span class="step-emoji" aria-hidden="true">🎧</span><b>Listen</b><small>Take in the message</small></button>
+      <div class="arrow" aria-hidden="true">→</div>
+      <button class="step" onclick="step(this, 'Understand: identify the meaning and intention behind what is being said.')"><span class="step-emoji" aria-hidden="true">🧠</span><b>Understand</b><small>Make sense of it</small></button>
+      <div class="arrow" aria-hidden="true">→</div>
+      <button class="step" onclick="step(this, 'Remember: hold the message long enough to render it accurately.')"><span class="step-emoji" aria-hidden="true">💭</span><b>Remember</b><small>Keep it in mind</small></button>
+      <div class="arrow" aria-hidden="true">→</div>
+      <button class="step" onclick="step(this, 'Reformulate: express the same meaning naturally in another language.')"><span class="step-emoji" aria-hidden="true">🔄</span><b>Reformulate</b><small>Build the message</small></button>
+      <div class="arrow" aria-hidden="true">→</div>
+      <button class="step" onclick="step(this, 'Deliver: communicate the message clearly and appropriately.')"><span class="step-emoji" aria-hidden="true">🗣️</span><b>Deliver</b><small>Make it understood</small></button>
+    </div>
+    <p class="step-info" id="stepInfo" aria-live="polite">Choose a stage to see what happens.</p>
+
+    <div class="footer"><span>The interpreting process</span><span class="num">6 / 7</span></div>
+  </section>
+
+  <!-- 7 · Your journey -->
+  <section class="slide dark" data-title="Your HBT102 Journey">
+    <div class="hero-shape hero-rocket" aria-hidden="true">🚀</div>
+    <div class="kicker"><span class="kicker-num"><span>06</span></span>Your journey</div>
+    <h2>You don’t need to<br>know it all yet.</h2>
+    <p class="lead">These skills will be developed progressively, one layer at a time.</p>
+
+    <div class="skills">
+      <div class="skill"><div class="symbol" aria-hidden="true">🎧</div><strong>Listening</strong><p>Attend to spoken messages.</p></div>
+      <div class="skill"><div class="symbol" aria-hidden="true">🧠</div><strong>Understanding</strong><p>Identify meaning and intention.</p></div>
+      <div class="skill"><div class="symbol" aria-hidden="true">💭</div><strong>Memory</strong><p>Retain information for rendering.</p></div>
+      <div class="skill"><div class="symbol" aria-hidden="true">🔄</div><strong>Reformulation</strong><p>Express meaning naturally.</p></div>
+      <div class="skill"><div class="symbol" aria-hidden="true">🗣️</div><strong>Delivery</strong><p>Communicate clearly.</p></div>
+    </div>
+
+    <div class="footer"><span>Skills we’ll build</span><span class="num">7 / 7</span></div>
+  </section>
+
+  <nav class="nav" aria-label="Slide navigation">
+    <button onclick="prev()" aria-label="Previous slide">←</button>
+    <button onclick="next()" aria-label="Next slide">→</button>
+  </nav>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let current = 0;
+
+  function show(i) {
+    current = (i + slides.length) % slides.length;
+    slides.forEach((s, n) => s.classList.toggle('active', n === current));
+    document.getElementById('progress').style.width = ((current + 1) / slides.length * 100) + '%';
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    // Let Space activate buttons when one is focused
+    if (e.key === ' ' && e.target.tagName === 'BUTTON') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') prev();
+  });
+
+  function selectOnly(selector, el) {
+    document.querySelectorAll(selector).forEach(x => x.classList.remove('selected', 'active'));
+    el.classList.add(selector === '.step' ? 'active' : 'selected');
+  }
+
+  function pickContext(el, text) {
+    selectOnly('.context', el);
+    document.getElementById('contextInfo').textContent = text;
+  }
+
+  function mode(el, text) {
+    selectOnly('.mode-card', el);
+    document.getElementById('modeInfo').textContent = text;
+  }
+
+  function step(el, text) {
+    selectOnly('.step', el);
+    document.getElementById('stepInfo').textContent = text;
+  }
+</script>
+</body>
+</html>
